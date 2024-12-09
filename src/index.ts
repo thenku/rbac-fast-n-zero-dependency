@@ -15,7 +15,7 @@ const defaultRoles: Record<string, iRoleRow> = {
     guest: {id: "guest", gid:0},
     owner: {id: "owner", gid:1},
     admin: {id: "admin", gid:2}, //manages roles as tech support but isn't the responsible data controller and/or processor or company owner
-    system: {id: "system", gid:3}, //maybe relevant for tracking changes but every service can also have its own role
+    // system: {id: "system", gid:3}, //maybe relevant for tracking changes but every service can also have its own role
 
     
     contributor: {id: "contributor", gid:8},
@@ -70,8 +70,8 @@ class RBACClass {
         const roleRow = this.rolesTable[role];
         return (roleRow) ? roleRow : defaultPermission;
     }
-    getRoleByGid(gid: number) {
-        return this.rolesTable[this.gid2Name[gid.toString()]];
+    getRoleNameOfGid(gid: number) {
+        return this.gid2Name[gid.toString()];
     }
 
     // endpoint table entries relate to the access relationship
@@ -99,6 +99,15 @@ class RBACClass {
     }
     getPermission(role:string, endpoint:string){
         const endPoint = this.endPointRolePermissions[endpoint];
+        if(role == "owner"){
+            return {
+                c: 1,
+                r: 1,
+                u: 1,
+                d: 1,
+                x: 1,
+            }
+        }
         if(endPoint){
             const permission = endPoint[role];
             if(permission){
@@ -106,6 +115,13 @@ class RBACClass {
             }
         }
         return defaultPermission;
+    }
+    getPermissionByGid(gid:number, endpoint:string){
+        const roleName = this.getRoleNameOfGid(gid);
+        if(!roleName){
+            return defaultPermission;
+        }
+        return this.getPermission(roleName, endpoint);
     }
 }
 const RBAC = new RBACClass();
