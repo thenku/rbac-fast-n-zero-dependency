@@ -6,8 +6,8 @@ type iPermission = {
     d: number,
     x: number,
 }
-type iAccessRelationship = "root" | "group" | "user";
-type iAccessRow = Record<iAccessRelationship, iPermission>;
+const accessRelationships = ["root", "group", "user"] as const;
+type iAccessRelationship = typeof accessRelationships[number];
 
 type iRoleRow = {id:string, gid:number, parent?:string};
 const defaultRoles: Record<string, iRoleRow> = {
@@ -20,24 +20,22 @@ const defaultRoles: Record<string, iRoleRow> = {
 
     registered: {id: "registered", gid:1000},
 }
+const defaultPermission:iPermission = {
+    c: 0,
+    r: 0,
+    u: 0,
+    d: 0,
+    x: 0,
+}
 
 class RBAC {
-    private whiteEndpoints: Record<string, iAccessRow> = {}; //only explicitly defined endpoints are allowed for access
-    
-    private endPointRolePermission: Record<string, iAccessRelationship> = {};
-
-    private endPointAccessRelationship: Record<string, iAccessRelationship> = {};
+    private whiteEndPointAccessRelationship: Record<string, iAccessRelationship> = {};//only explicitly defined endpoints are allowed for access
+    private endPointRolePermissions: {[endPoint in string]: {[roleName in string]: iPermission}} = {};
 
     private rolesTable: {[roleName in string]: iRoleRow} = defaultRoles; //roles are types of groups
     private gid2Name: {[gidStr in string]: string} = {};
     private latestRoleKey: number = 0;
 
-    constructor(){
-        //set basic groups
-        this.setRoleOnce("guest");
-        this.setRoleOnce("admin");
-        this.setRoleOnce("registered");
-    }
     private getIncrementedRoleKey(){
         for (const key in this.rolesTable) {
             const num = parseInt(key);
@@ -49,38 +47,40 @@ class RBAC {
         return this.latestRoleKey;
     }
     hasRole(role: string) {
-        return this.roleNamesMap[role] != undefined ? true : false;
+        return this.rolesTable[role] != undefined ? true : false;
     }
-
     setRoleOnce(role: string, parentRole: string = "") {
-        const roleExists = this.hasRole(role);
-        if(!roleExists){
+        if(!this.hasRole(role)){
             const gid = this.getIncrementedRoleKey();
             this.rolesTable[role] = {id: role, gid: gid, parent: parentRole};
+            this.gid2Name[gid.toString()] = role;
         }
     }
-    addRoleToEndpoint(role: string, endpoint: string) {
-        
+    getRole(role: string) {
+        const roleRow = this.rolesTable[role];
+        return (roleRow) ? roleRow : defaultPermission;
     }
-    addGroupName(){
-
-    }
-
     allowEndpoint(endpoint: string, accessRelationship: iAccessRelationship) {
-        this.whiteEndpoints[endpoint] = accessRelationship;
+        this.whiteEndPointAccessRelationship[endpoint] = accessRelationship;
     }
     removeEndpoint(endpoint: string) {
-        delete this.whiteEndpoints[endpoint];
+        delete this.whiteEndPointAccessRelationship[endpoint];
     }
-    // addPermission(role: string, permission: string) {
-    //     if (!this.table[role]) {
-    //         this.table[role] = [];
-    //     }
-    //     this.table[role].push(permission);
-    // }
+    setPermission(role: string, endpoint: string, permission: iPermission) {
+        if(!this.endPointRolePermissions[endpoint]){
+            this.endPointRolePermissions[endpoint] = {};
+        }
+        this.endPointRolePermissions[endpoint][role] = permission;
+    }
     getPermission(role:string, endpoint:string){
-        
-
+        const endPoint = this.endPointRolePermissions[endpoint];
+        if(endPoint){
+            const permission = endPoint[role];
+            if(permission){
+                return permission;
+            }
+        }
+        return defaultPermission;
     }
 }
 const RBACSingleton = new RBAC();
