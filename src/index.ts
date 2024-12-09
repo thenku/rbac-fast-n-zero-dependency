@@ -9,17 +9,21 @@ type iPermission = {
 const accessRelationships = ["root", "group", "user"] as const;
 type iAccessRelationship = typeof accessRelationships[number];
 
-type iRoleRow = {id:string, gid:number, parent?:string};
+type iRoleRow = {id:string, gid:number};
+
 const defaultRoles: Record<string, iRoleRow> = {
     guest: {id: "guest", gid:0},
     owner: {id: "owner", gid:1},
     admin: {id: "admin", gid:2}, //manages roles as tech support but isn't the responsible data controller and/or processor or company owner
+    system: {id: "system", gid:3}, //maybe relevant for tracking changes but every service can also have its own role
 
-    contributor: {id: "contributor", gid:3},
-    reader: {id: "reader", gid:4},
+    
+    contributor: {id: "contributor", gid:8},
+    reader: {id: "reader", gid:9},
+    registered: {id: "registered", gid:10},
+} as const;
+type iRoleKey = keyof typeof defaultRoles;
 
-    registered: {id: "registered", gid:1000},
-}
 const defaultPermission:iPermission = {
     c: 0,
     r: 0,
@@ -28,7 +32,7 @@ const defaultPermission:iPermission = {
     x: 0,
 }
 
-class RBAC {
+class RBACClass {
     private whiteEndPointAccessRelationship: Record<string, iAccessRelationship> = {};//only explicitly defined endpoints are allowed for access
     private endPointRolePermissions: {[endPoint in string]: {[roleName in string]: iPermission}} = {};
 
@@ -36,37 +40,58 @@ class RBAC {
     private gid2Name: {[gidStr in string]: string} = {};
     private latestRoleKey: number = 0;
 
-    private getIncrementedRoleKey(){
+    constructor(){
         for (const key in this.rolesTable) {
-            const num = parseInt(key);
-            if(num > this.latestRoleKey){
-                this.latestRoleKey = num;
+            const {gid} = this.rolesTable[key];
+            this.gid2Name[gid.toString()] = key;
+            if(gid > this.latestRoleKey){
+                this.latestRoleKey = gid;
             }
         }
+    }
+    private getIncrementedRoleKey(){
         this.latestRoleKey++;
         return this.latestRoleKey;
     }
+    
     hasRole(role: string) {
         return this.rolesTable[role] != undefined ? true : false;
     }
-    setRoleOnce(role: string, parentRole: string = "") {
+    setRoleOnce(role: string) {
         if(!this.hasRole(role)){
             const gid = this.getIncrementedRoleKey();
-            this.rolesTable[role] = {id: role, gid: gid, parent: parentRole};
+            this.rolesTable[role] = {id: role, gid: gid};
             this.gid2Name[gid.toString()] = role;
+        }else{
+            console.log(role," -- Role already exists");
         }
     }
     getRole(role: string) {
         const roleRow = this.rolesTable[role];
         return (roleRow) ? roleRow : defaultPermission;
     }
-    allowEndpoint(endpoint: string, accessRelationship: iAccessRelationship) {
+    getRoleByGid(gid: number) {
+        return this.rolesTable[this.gid2Name[gid.toString()]];
+    }
+
+    // endpoint table entries relate to the access relationship
+    // sometimes individual fields eg. file can have a different ownership eg. root table can have photos of users stored in their directories
+    // field ownership is handled at the form processing level
+    setEndpointAccessRelationship(endpoint: string, accessRelationship: iAccessRelationship) {
         this.whiteEndPointAccessRelationship[endpoint] = accessRelationship;
     }
-    removeEndpoint(endpoint: string) {
+    removeEndpointAccessRelationship(endpoint: string) {
         delete this.whiteEndPointAccessRelationship[endpoint];
     }
+    getEndpointAccessRelationship(endpoint: string) {
+        return this.whiteEndPointAccessRelationship[endpoint]; //if there is not relationship, the endpoint does not exist
+    }
+
     setPermission(role: string, endpoint: string, permission: iPermission) {
+        if(!this.getEndpointAccessRelationship(endpoint)){
+            console.log("Endpoint does not exist");
+            return;
+        }
         if(!this.endPointRolePermissions[endpoint]){
             this.endPointRolePermissions[endpoint] = {};
         }
@@ -83,5 +108,5 @@ class RBAC {
         return defaultPermission;
     }
 }
-const RBACSingleton = new RBAC();
-export default RBACSingleton;
+const RBAC = new RBACClass();
+export default RBAC;
