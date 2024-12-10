@@ -67,8 +67,11 @@ class RBACClass {
         }
     }
     getRole(role: string) {
-        const roleRow = this.rolesTable[role];
-        return (roleRow) ? roleRow : defaultPermission;
+        return this.rolesTable[role];
+    }
+    getGidOfRole(roleName: string) {
+        const role = this.getRole(roleName);
+        return role ? role.gid : 0;
     }
     getRoleNameOfGid(gid: number) {
         return this.gid2Name[gid.toString()];

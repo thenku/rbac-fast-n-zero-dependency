@@ -38,7 +38,9 @@ RBAC.setPermissions("registered", "/users", {c:1, r:1, u:1, d:1, x:1});
 
 // getPermissions
 rbac.getPermissions("owner", "/users"); //owner always has all permissions if the endpoint was enabled
-rbac.getPermissions("registered", "/users"); //registered may 
+
+const gid = rbac.getGidOfRole("registered");
+rbac.getPermissions(rbac.getRoleNameOfGid(gid), "/users"); //registered role permissions (apply filter if using root context)
 
 
 
