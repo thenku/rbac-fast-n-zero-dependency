@@ -1,8 +1,15 @@
 # rbac-fast-n-zero-dependency
 
-#### A fast RBAC manager for nodejs using in-memory Hash Tables or Key-Value Pairs.
+#### A data storage agnostic Role-Based-Access-Control (RBAC) manager with Big O(1) complexity and zero dependencies.
 
 ## How to Use
+
+### Concept
+1. Add a role or use an existing role.
+2. Enable endpoints by defining a context filter: "root" | "group" | "user".
+3. Optionally interpret the endpoint context if you have a multi-tenant system.
+4. Explicitly set (whitelist) permissions for each role per endpoint.
+5. Use your authorized user's groupId to query his/her permissions for the requested endpoint.
 
 ### Installation
 
@@ -23,14 +30,17 @@ const rbac = new RBAC();
 rbac.setRoleOnce('vendors');
 rbac.setRoleOnce('employees');
 
-// enable endpoints with corresponding table relationships if needed
+// enable endpoints by adding an owner-type OR access-relationship for the endpoint 
 rbac.setEndpointAccessRelationship("/users", "root"); "root" | "group" | "user"
-
-// getPermissions
-rbac.getPermissions("owner", "/users"); //owner always has all permissions if the endpoint was enabled
 
 // whitelist permissions per endpoint per role
 RBAC.setPermissions("registered", "/users", {c:1, r:1, u:1, d:1, x:1});
+
+// getPermissions
+rbac.getPermissions("owner", "/users"); //owner always has all permissions if the endpoint was enabled
+rbac.getPermissions("registered", "/users"); //registered may 
+
+
 
 ```
 
