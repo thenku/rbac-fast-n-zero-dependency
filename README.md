@@ -22,7 +22,7 @@ npm install rbac-fast-n-zero-dependency
 
 ```javascript
 
-import RBAC from './index'; //import the global singleton
+import RBAC from 'rbac-fast-n-zero-dependency'; //import the global singleton
 
 // Add non-default roles / groups
 RBAC.setRoleOnce('vendors');
