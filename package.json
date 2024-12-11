@@ -4,7 +4,7 @@
     "type": "git",
     "url": "https://github.com/thenku/rbac-fast-n-zero-dependency.git"
   },
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "A data storage agnostic Role-Based-Access-Control (RBAC) manager with Big O(1) complexity and zero dependencies",
   "main": "dist/index.js",
   "scripts": {
