@@ -1,28 +1,42 @@
+
+const storageLocations = ["central", "group", "user"] as const; //table storage locations: system, group or user.
+type iStorageLocation = typeof storageLocations[number];
+
+//if selector is gid, then user can see all entries of his/her group. if root then only root can see all entries.
+
+const accessSelectors = ["all", "gid", "uid"] as const; //select the data related to the user and the selector.
+type iAccessSelector = typeof accessSelectors[number]; //after finding the entries location, the filter is applied to the entries.
+
+//Why should a user be able to have multiple roles? It's not normal.
+//a user can have multiple roles. Its highest permissions are used for each endpoint.
+
 //permission type
 type iPermission = {
-    c: number,
-    r: number,
-    u: number,
-    d: number,
-    x: number,
+    c: number, //create
+    r: number, //read
+    u: number, //update
+    d: number, //delete
+    x: number, //execute
+    a: iAccessSelector, //admin has access to all. gid has access to all in the group. uid has access to all in the user.
 }
-const accessRelationships = ["root", "group", "user"] as const;
-type iAccessRelationship = typeof accessRelationships[number];
 
-type iRoleRow = {id:string, gid:number};
+type iRoleName = string;
+type iRoleRow = {id:iRoleName, gid:number};
 
 const defaultRoles: Record<string, iRoleRow> = {
-    guest: {id: "guest", gid:0}, //guest has uid 0 because 0 evaluates to false
-    owner: {id: "owner", gid:1}, //by default owner has all permissions
-    admin: {id: "admin", gid:2}, //manages roles as tech support but isn't the responsible data controller and/or processor or company owner
-    // system: {id: "system", gid:3}, //maybe relevant for tracking changes but every service can also have its own role
-
+    guest: {id: "guest", gid:0}, //guest has uid 0 and gid 0 because it evaluates to false
+    root: {id: "root", gid:1}, //by default root is the system owner having all permissions, gid:1 and uid:1
+    admin: {id: "admin", gid:2}, //high level tech support but NOT being the responsible party / data controller / data processor
     
-    contributor: {id: "contributor", gid:8},
-    reader: {id: "reader", gid:9},
-    registered: {id: "registered", gid:10},
+    contributor: {id: "contributor", gid:3},
+    reader: {id: "reader", gid:4},
+    registered: {id: "registered", gid:5},
+
+    tier1: {id: "tier1", gid:6},
+    tier2: {id: "tier2", gid:7},
+    tier3: {id: "tier3", gid:8},
+    tier4: {id: "tier4", gid:9},
 } as const;
-type iRoleKey = keyof typeof defaultRoles;
 
 const defaultPermission:iPermission = {
     c: 0,
@@ -30,14 +44,16 @@ const defaultPermission:iPermission = {
     u: 0,
     d: 0,
     x: 0,
+    a: "uid",
 }
 
 class RBACClass {
-    private whiteEndPointAccessRelationship: Record<string, iAccessRelationship> = {};//only explicitly defined endpoints are allowed for access
+    private whiteEndPointAccessRelationship: Record<string, iStorageLocation> = {};//only explicitly defined endpoints are allowed for access
     private endPointRolePermissions: {[endPoint in string]: {[roleName in string]: iPermission}} = {};
 
     private rolesTable: {[roleName in string]: iRoleRow} = defaultRoles; //roles are types of groups
     private gid2Name: {[gidStr in string]: string} = {};
+
     private latestRoleKey: number = 0;
 
     constructor(){
@@ -63,14 +79,11 @@ class RBACClass {
             this.rolesTable[role] = {id: role, gid: gid};
             this.gid2Name[gid.toString()] = role;
         }else{
-            console.log(role," -- Role already exists");
+            console.error(role," -- Role already exists");
         }
     }
-    getRole(role: string) {
-        return this.rolesTable[role];
-    }
-    getGidOfRole(roleName: string) {
-        const role = this.getRole(roleName);
+    getGidOfRoleName(roleName: string) {
+        const role = this.rolesTable[roleName];;
         return role ? role.gid : 0;
     }
     getRoleNameOfGid(gid: number) {
@@ -80,19 +93,20 @@ class RBACClass {
     // endpoint table entries relate to the access relationship
     // sometimes individual fields eg. file can have a different ownership eg. root table can have photos of users stored in their directories
     // field ownership is handled at the form processing level
-    setEndpointAccessRelationship(endpoint: string, accessRelationship: iAccessRelationship) {
-        this.whiteEndPointAccessRelationship[endpoint] = accessRelationship;
-    }
-    removeEndpointAccessRelationship(endpoint: string) {
-        delete this.whiteEndPointAccessRelationship[endpoint];
+
+    setEndpointAccessRelationship(endpoint: string, storageLocation: iStorageLocation) {
+        this.whiteEndPointAccessRelationship[endpoint] = storageLocation;
     }
     getEndpointAccessRelationship(endpoint: string) {
-        return this.whiteEndPointAccessRelationship[endpoint]; //if there is not relationship, the endpoint does not exist
+        return this.whiteEndPointAccessRelationship[endpoint]; //if there is no relationship, the endpoint does not exist
+    }
+    removeEndpointAccess(endpoint: string) {
+        delete this.whiteEndPointAccessRelationship[endpoint];
     }
 
     setPermission(role: string, endpoint: string, permission: iPermission) {
         if(!this.getEndpointAccessRelationship(endpoint)){
-            console.log("Endpoint does not exist");
+            console.error(endpoint, "-- endpoint does not exist");
             return;
         }
         if(!this.endPointRolePermissions[endpoint]){
@@ -102,7 +116,7 @@ class RBACClass {
     }
     getPermission(role:string, endpoint:string){
         const endPoint = this.endPointRolePermissions[endpoint];
-        if(role == "owner"){
+        if(role == "root"){
             return {
                 c: 1,
                 r: 1,

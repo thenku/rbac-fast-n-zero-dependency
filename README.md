@@ -28,28 +28,48 @@ const RBAC = require('rbac-fast-n-zero-dependency');//import singleton
 RBAC.setRoleOnce('vendors');
 RBAC.setRoleOnce('employees');
 
+//choose an endpoint
+const endpoint1 = "/users";
+
 // enable endpoints by adding an owner-type OR access-relationship for the endpoint 
-RBAC.setEndpointAccessRelationship("/users", "root"); "root" | "group" | "user"
+RBAC.setEndpointAccessRelationship(endpoint1, "root"); "root" | "group" | "user"
+
+//set
 
 // whitelist permissions per endpoint per role
-RBAC.setPermissions("registered", "/users", {c:1, r:1, u:1, d:1, x:1});
+RBAC.setPermissions("registered", endpoint1, {c:1, r:1, u:1, d:1, x:1});
 
 // getPermissions
-RBAC.getPermissions("owner", "/users"); //owner always has all permissions if the endpoint was enabled
+RBAC.getPermissions("owner", endpoint1); //owner always has all permissions if the endpoint was enabled
 
 const gid = RBAC.getGidOfRole("registered");
-RBAC.getPermissions(RBAC.getRoleNameOfGid(gid), "/users"); //registered role permissions (apply filter if using root context)
+RBAC.getPermissions(RBAC.getRoleNameOfGid(gid), endpoint1); //registered role permissions (apply filter if using root context)
 
+// filter entries for an multi-tenant endpoint?
+const accessRelationship = RBAC.getEndpointAccessRelationship(endpoint1);
+const noFilterBeingAUserSpecificDataSource = (accessRel == "user") ? true : false;
+const filterAccessByUID = (accessRel == "root") ? true : false;
+const filterAccessByGID = (accessRel == "group") ? true : false;
+
+// Do I own the endpoint? If yes, then show all sub- entries, files and tables.
+// If I own the endpoint, can I share the complete endpoint with a group?
+// Can a group be an owner? I say no. Why? Because of isolating it to one user account.
+
+// the question is: When are we acting as a user and when as an owner / admin?
 
 ```
 
 ### default roles
-- owner
-- admin
-- contributor
-- reader
-- registered
 - guest
+- root (system owner)
+- admin (tech support)
+- contributor (content creator)
+- reader (content reader but not creator)
+- registered (self registered user)
+- tier1 (customer)
+- tier2 (customer)
+- tier3 (customer)
+- tier4 (customer)
 
 ### API
 
