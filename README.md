@@ -9,8 +9,8 @@
 2. Enable endpoints by defining a storage context: "root" | "group" | "user".
 4. Explicitly set (whitelist) permissions for each role per endpoint.
 5. Use your authorized user's groupId to query his/her permissions for the requested endpoint.
-1. Optionally interpret the endpoint storage and access context if you have a multi-tenant system.
 6. If you want to use a DB for storing RBAC, then load your entries at app-initialization and update them at the same time as your DB updates.
+1. Optionally interpret the endpoint storage and access context if you have a multi-tenant system.
 
 ### Installation
 
@@ -66,7 +66,7 @@ const mustFilterAccessByGID = (permissions.a  == "gid") ? true : false;
 - tier3 (customer)
 - tier4 (customer)
 
-### API
+## API
 
 #### `RBAC`
 
@@ -123,3 +123,12 @@ Removes a role from the RBAC system.
 Removes an endpoint from the RBAC system.
 
 - `endpoint` (string): The endpoint to remove.
+
+
+## Recent Updates
+
+#### Version 2.0.0
+- Clarified multi-tenant functionality.
+
+#### Version 1.0.3
+- Core RBAC functionality.
