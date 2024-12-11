@@ -1,14 +1,18 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const accessRelationships = ["root", "group", "user"];
+const storageContexts = ["root", "group", "user"]; //table storage locations: system, group or user.
+const accessSelectors = ["grant", "mng", "gid", "uid"]; //all may grant access to roles and access all user and group entries.
 const defaultRoles = {
-    guest: { id: "guest", gid: 0 },
-    owner: { id: "owner", gid: 1 },
-    admin: { id: "admin", gid: 2 }, //manages roles as tech support but isn't the responsible data controller and/or processor or company owner
-    system: { id: "system", gid: 3 }, //maybe relevant for tracking changes but every service can also have its own role
-    contributor: { id: "contributor", gid: 8 },
-    reader: { id: "reader", gid: 9 },
-    registered: { id: "registered", gid: 10 },
+    guest: { id: "guest", gid: 0 }, //guest has uid 0 and gid 0 because it evaluates to false
+    owner: { id: "owner", gid: 1 }, //by default owner is the system owner having all permissions, gid:1 and uid:1
+    admin: { id: "admin", gid: 2 }, //high level tech support but NOT being the responsible party / data controller / data processor
+    contributor: { id: "contributor", gid: 3 },
+    reader: { id: "reader", gid: 4 },
+    registered: { id: "registered", gid: 5 },
+    tier1: { id: "tier1", gid: 6 },
+    tier2: { id: "tier2", gid: 7 },
+    tier3: { id: "tier3", gid: 8 },
+    tier4: { id: "tier4", gid: 9 },
 };
 const defaultPermission = {
     c: 0,
@@ -16,10 +20,11 @@ const defaultPermission = {
     u: 0,
     d: 0,
     x: 0,
+    a: "uid",
 };
 class RBACClass {
     constructor() {
-        this.whiteEndPointAccessRelationship = {}; //only explicitly defined endpoints are allowed for access
+        this.endPointStorageContexts = {}; //only explicitly defined endpoints are allowed for access
         this.endPointRolePermissions = {};
         this.rolesTable = defaultRoles; //roles are types of groups
         this.gid2Name = {};
@@ -46,31 +51,29 @@ class RBACClass {
             this.gid2Name[gid.toString()] = role;
         }
         else {
-            console.log(role, " -- Role already exists");
+            console.error(role, " -- Role already exists");
         }
     }
-    getRole(role) {
-        const roleRow = this.rolesTable[role];
-        return (roleRow) ? roleRow : defaultPermission;
+    getGidOfRoleName(roleName) {
+        const role = this.rolesTable[roleName];
+        ;
+        return role ? role.gid : 0;
     }
-    getRoleByGid(gid) {
-        return this.rolesTable[this.gid2Name[gid.toString()]];
+    getRoleNameOfGid(gid) {
+        return this.gid2Name[gid.toString()];
     }
-    // endpoint table entries relate to the access relationship
-    // sometimes individual fields eg. file can have a different ownership eg. root table can have photos of users stored in their directories
-    // field ownership is handled at the form processing level
-    setEndpointAccessRelationship(endpoint, accessRelationship) {
-        this.whiteEndPointAccessRelationship[endpoint] = accessRelationship;
+    setEndpointStorageContext(endpoint, storageContext) {
+        this.endPointStorageContexts[endpoint] = storageContext;
     }
-    removeEndpointAccessRelationship(endpoint) {
-        delete this.whiteEndPointAccessRelationship[endpoint];
+    getEndpointStorageContext(endpoint) {
+        return this.endPointStorageContexts[endpoint]; //if there is no relationship, the endpoint does not exist
     }
-    getEndpointAccessRelationship(endpoint) {
-        return this.whiteEndPointAccessRelationship[endpoint]; //if there is not relationship, the endpoint does not exist
+    removeEndpointAccess(endpoint) {
+        delete this.endPointStorageContexts[endpoint];
     }
-    setPermission(role, endpoint, permission) {
-        if (!this.getEndpointAccessRelationship(endpoint)) {
-            console.log("Endpoint does not exist");
+    setPermissions(role, endpoint, permission) {
+        if (!this.getEndpointStorageContext(endpoint)) {
+            console.error(endpoint, "-- endpoint does not exist");
             return;
         }
         if (!this.endPointRolePermissions[endpoint]) {
@@ -78,8 +81,18 @@ class RBACClass {
         }
         this.endPointRolePermissions[endpoint][role] = permission;
     }
-    getPermission(role, endpoint) {
+    getPermissions(role, endpoint) {
         const endPoint = this.endPointRolePermissions[endpoint];
+        if (role == "owner") {
+            return {
+                c: 1,
+                r: 1,
+                u: 1,
+                d: 1,
+                x: 1,
+                a: "grant",
+            };
+        }
         if (endPoint) {
             const permission = endPoint[role];
             if (permission) {
@@ -88,6 +101,13 @@ class RBACClass {
         }
         return defaultPermission;
     }
+    getPermissionByGid(gid, endpoint) {
+        const roleName = this.getRoleNameOfGid(gid);
+        if (!roleName) {
+            return defaultPermission;
+        }
+        return this.getPermissions(roleName, endpoint);
+    }
 }
-const RBAC = new RBACClass();
+const RBAC = new RBACClass(); //singleton
 exports.default = RBAC;

@@ -1,18 +1,18 @@
+declare const storageContexts: readonly ["root", "group", "user"];
+type iStorageContext = typeof storageContexts[number];
+declare const accessSelectors: readonly ["grant", "mng", "gid", "uid"];
+type iAccessSelector = typeof accessSelectors[number];
 type iPermission = {
     c: number;
     r: number;
     u: number;
     d: number;
     x: number;
+    a?: iAccessSelector;
 };
-declare const accessRelationships: readonly ["root", "group", "user"];
-type iAccessRelationship = typeof accessRelationships[number];
-type iRoleRow = {
-    id: string;
-    gid: number;
-};
+type iRoleName = string;
 declare class RBACClass {
-    private whiteEndPointAccessRelationship;
+    private endPointStorageContexts;
     private endPointRolePermissions;
     private rolesTable;
     private gid2Name;
@@ -21,13 +21,14 @@ declare class RBACClass {
     private getIncrementedRoleKey;
     hasRole(role: string): boolean;
     setRoleOnce(role: string): void;
-    getRole(role: string): iPermission | iRoleRow;
-    getRoleByGid(gid: number): iRoleRow;
-    setEndpointAccessRelationship(endpoint: string, accessRelationship: iAccessRelationship): void;
-    removeEndpointAccessRelationship(endpoint: string): void;
-    getEndpointAccessRelationship(endpoint: string): "root" | "group" | "user";
-    setPermission(role: string, endpoint: string, permission: iPermission): void;
-    getPermission(role: string, endpoint: string): iPermission;
+    getGidOfRoleName(roleName: string): number;
+    getRoleNameOfGid(gid: number): string;
+    setEndpointStorageContext(endpoint: string, storageContext: iStorageContext): void;
+    getEndpointStorageContext(endpoint: string): "root" | "group" | "user";
+    removeEndpointAccess(endpoint: string): void;
+    setPermissions(role: iRoleName, endpoint: string, permission: iPermission): void;
+    getPermissions(role: iRoleName, endpoint: string): iPermission;
+    getPermissionByGid(gid: number, endpoint: string): iPermission;
 }
 declare const RBAC: RBACClass;
 export default RBAC;
