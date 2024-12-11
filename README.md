@@ -24,25 +24,21 @@ npm install rbac-fast-n-zero-dependency
 
 const RBAC = require('rbac-fast-n-zero-dependency');
 
-const rbac = new RBAC();
-
-
 // Add non-default roles / groups
-rbac.setRoleOnce('vendors');
-rbac.setRoleOnce('employees');
+RBAC.setRoleOnce('vendors');
+RBAC.setRoleOnce('employees');
 
 // enable endpoints by adding an owner-type OR access-relationship for the endpoint 
-rbac.setEndpointAccessRelationship("/users", "root"); "root" | "group" | "user"
+RBAC.setEndpointAccessRelationship("/users", "root"); "root" | "group" | "user"
 
 // whitelist permissions per endpoint per role
 RBAC.setPermissions("registered", "/users", {c:1, r:1, u:1, d:1, x:1});
 
 // getPermissions
-rbac.getPermissions("owner", "/users"); //owner always has all permissions if the endpoint was enabled
+RBAC.getPermissions("owner", "/users"); //owner always has all permissions if the endpoint was enabled
 
-const gid = rbac.getGidOfRole("registered");
-rbac.getPermissions(rbac.getRoleNameOfGid(gid), "/users"); //registered role permissions (apply filter if using root context)
-
+const gid = RBAC.getGidOfRole("registered");
+RBAC.getPermissions(RBAC.getRoleNameOfGid(gid), "/users"); //registered role permissions (apply filter if using root context)
 
 
 ```
@@ -57,9 +53,9 @@ rbac.getPermissions(rbac.getRoleNameOfGid(gid), "/users"); //registered role per
 
 ### API
 
-#### `RBAC()`
+#### `RBAC`
 
-Creates a new RBAC instance.
+Imports the RBAC singleton.
 
 #### `setRoleOnce(role)`
 
