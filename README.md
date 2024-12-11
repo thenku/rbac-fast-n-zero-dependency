@@ -31,7 +31,7 @@ RBAC.setRoleOnce('employees');
 //choose an endpoint
 const endpoint1 = "/users";
 
-// enable endpoints by adding an owner-type OR access-relationship for the endpoint 
+// enable endpoints by adding a storage context for the endpoint 
 RBAC.setEndpointStorageContext(endpoint1, "root"); //"root" | "group" | "user"
 
 // whitelist permissions per endpoint per role and define a selector a: "grant" | "mng" | "gid" | "uid" for related entries
@@ -78,12 +78,18 @@ Adds a new role if it doesn't already exist.
 
 - `role` (string): The name of the role to add.
 
-#### `setEndpointAccessRelationship(endpoint, relationship)`
+#### `setEndpointStorageContext(endpoint, storageContext)`
 
-Sets the access relationship for a specific endpoint.
+Sets the storage context for a specific endpoint.
 
-- `endpoint` (string): The endpoint to set the relationship for.
-- `relationship` (string): The type of relationship ("root", "group", "user").
+- `endpoint` (string): The endpoint to set the storageContext for.
+- `storageContext` (string): The type of storageContext ("root", "group", "user").
+
+#### `getEndpointStorageContext(endpoint)`
+
+Gets the storage context for a specific endpoint.
+
+- `endpoint` (string): The endpoint to get the storageContext for.
 
 #### `getPermissions(role, endpoint)`
 
