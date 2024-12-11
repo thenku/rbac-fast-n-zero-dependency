@@ -1,14 +1,9 @@
 
-const storageLocations = ["central", "group", "user"] as const; //table storage locations: system, group or user.
-type iStorageLocation = typeof storageLocations[number];
+const storageContexts = ["root", "group", "user"] as const; //table storage locations: system, group or user.
+type iStorageContext = typeof storageContexts[number];
 
-//if selector is gid, then user can see all entries of his/her group. if root then only root can see all entries.
-
-const accessSelectors = ["all", "gid", "uid"] as const; //select the data related to the user and the selector.
-type iAccessSelector = typeof accessSelectors[number]; //after finding the entries location, the filter is applied to the entries.
-
-//Why should a user be able to have multiple roles? It's not normal.
-//a user can have multiple roles. Its highest permissions are used for each endpoint.
+const accessSelectors = ["grant", "mng", "gid", "uid"] as const; //all may grant access to roles and access all user and group entries.
+type iAccessSelector = typeof accessSelectors[number];
 
 //permission type
 type iPermission = {
@@ -17,7 +12,7 @@ type iPermission = {
     u: number, //update
     d: number, //delete
     x: number, //execute
-    a: iAccessSelector, //admin has access to all. gid has access to all in the group. uid has access to all in the user.
+    a?: iAccessSelector, //admin has access to all, gid to role and uid to user entries.
 }
 
 type iRoleName = string;
@@ -25,7 +20,7 @@ type iRoleRow = {id:iRoleName, gid:number};
 
 const defaultRoles: Record<string, iRoleRow> = {
     guest: {id: "guest", gid:0}, //guest has uid 0 and gid 0 because it evaluates to false
-    root: {id: "root", gid:1}, //by default root is the system owner having all permissions, gid:1 and uid:1
+    owner: {id: "owner", gid:1}, //by default owner is the system owner having all permissions, gid:1 and uid:1
     admin: {id: "admin", gid:2}, //high level tech support but NOT being the responsible party / data controller / data processor
     
     contributor: {id: "contributor", gid:3},
@@ -48,7 +43,7 @@ const defaultPermission:iPermission = {
 }
 
 class RBACClass {
-    private whiteEndPointAccessRelationship: Record<string, iStorageLocation> = {};//only explicitly defined endpoints are allowed for access
+    private endPointStorageContexts: Record<string, iStorageContext> = {};//only explicitly defined endpoints are allowed for access
     private endPointRolePermissions: {[endPoint in string]: {[roleName in string]: iPermission}} = {};
 
     private rolesTable: {[roleName in string]: iRoleRow} = defaultRoles; //roles are types of groups
@@ -90,22 +85,18 @@ class RBACClass {
         return this.gid2Name[gid.toString()];
     }
 
-    // endpoint table entries relate to the access relationship
-    // sometimes individual fields eg. file can have a different ownership eg. root table can have photos of users stored in their directories
-    // field ownership is handled at the form processing level
-
-    setEndpointAccessRelationship(endpoint: string, storageLocation: iStorageLocation) {
-        this.whiteEndPointAccessRelationship[endpoint] = storageLocation;
+    setEndpointStorageContext(endpoint: string, storageContext: iStorageContext) {
+        this.endPointStorageContexts[endpoint] = storageContext;
     }
-    getEndpointAccessRelationship(endpoint: string) {
-        return this.whiteEndPointAccessRelationship[endpoint]; //if there is no relationship, the endpoint does not exist
+    getEndpointStorageContext(endpoint: string) {
+        return this.endPointStorageContexts[endpoint]; //if there is no relationship, the endpoint does not exist
     }
     removeEndpointAccess(endpoint: string) {
-        delete this.whiteEndPointAccessRelationship[endpoint];
+        delete this.endPointStorageContexts[endpoint];
     }
 
-    setPermission(role: string, endpoint: string, permission: iPermission) {
-        if(!this.getEndpointAccessRelationship(endpoint)){
+    setPermissions(role: iRoleName, endpoint: string, permission: iPermission) {
+        if(!this.getEndpointStorageContext(endpoint)){
             console.error(endpoint, "-- endpoint does not exist");
             return;
         }
@@ -114,16 +105,17 @@ class RBACClass {
         }
         this.endPointRolePermissions[endpoint][role] = permission;
     }
-    getPermission(role:string, endpoint:string){
+    getPermissions(role:iRoleName, endpoint:string){
         const endPoint = this.endPointRolePermissions[endpoint];
-        if(role == "root"){
+        if(role == "owner"){
             return {
                 c: 1,
                 r: 1,
                 u: 1,
                 d: 1,
                 x: 1,
-            }
+                a: "grant",
+            } as iPermission;
         }
         if(endPoint){
             const permission = endPoint[role];
@@ -138,7 +130,7 @@ class RBACClass {
         if(!roleName){
             return defaultPermission;
         }
-        return this.getPermission(roleName, endpoint);
+        return this.getPermissions(roleName, endpoint);
     }
 }
 const RBAC = new RBACClass(); //singleton

@@ -6,10 +6,10 @@
 
 ### Concept
 1. Add a role or use an existing role.
-2. Enable endpoints by defining a context filter: "root" | "group" | "user".
-3. Optionally interpret the endpoint context if you have a multi-tenant system.
+2. Enable endpoints by defining a storage context: "root" | "group" | "user".
 4. Explicitly set (whitelist) permissions for each role per endpoint.
 5. Use your authorized user's groupId to query his/her permissions for the requested endpoint.
+1. Optionally interpret the endpoint storage and access context if you have a multi-tenant system.
 6. If you want to use a DB for storing RBAC, then load your entries at app-initialization and update them at the same time as your DB updates.
 
 ### Installation
@@ -22,7 +22,7 @@ npm install rbac-fast-n-zero-dependency
 
 ```javascript
 
-const RBAC = require('rbac-fast-n-zero-dependency');//import singleton
+import RBAC from './index'; //import the global singleton
 
 // Add non-default roles / groups
 RBAC.setRoleOnce('vendors');
@@ -32,36 +32,31 @@ RBAC.setRoleOnce('employees');
 const endpoint1 = "/users";
 
 // enable endpoints by adding an owner-type OR access-relationship for the endpoint 
-RBAC.setEndpointAccessRelationship(endpoint1, "root"); "root" | "group" | "user"
+RBAC.setEndpointStorageContext(endpoint1, "root"); //"root" | "group" | "user"
 
-//set
-
-// whitelist permissions per endpoint per role
-RBAC.setPermissions("registered", endpoint1, {c:1, r:1, u:1, d:1, x:1});
+// whitelist permissions per endpoint per role and define a selector a: "grant" | "mng" | "gid" | "uid" for related entries
+RBAC.setPermissions("registered", endpoint1, {c:1, r:1, u:1, d:1, x:1, a:"uid"});
 
 // getPermissions
 RBAC.getPermissions("owner", endpoint1); //owner always has all permissions if the endpoint was enabled
 
-const gid = RBAC.getGidOfRole("registered");
-RBAC.getPermissions(RBAC.getRoleNameOfGid(gid), endpoint1); //registered role permissions (apply filter if using root context)
+const gid = RBAC.getGidOfRoleName("registered");
+const permissions = RBAC.getPermissions(RBAC.getRoleNameOfGid(gid), endpoint1); //registered role permissions
 
-// filter entries for an multi-tenant endpoint?
-const accessRelationship = RBAC.getEndpointAccessRelationship(endpoint1);
-const noFilterBeingAUserSpecificDataSource = (accessRel == "user") ? true : false;
-const filterAccessByUID = (accessRel == "root") ? true : false;
-const filterAccessByGID = (accessRel == "group") ? true : false;
+// get multi-tenant options
+const storageContext = RBAC.getEndpointStorageContext(endpoint1); //where to find the data-hierarchy of the endpoint
 
-// Do I own the endpoint? If yes, then show all sub- entries, files and tables.
-// If I own the endpoint, can I share the complete endpoint with a group?
-// Can a group be an owner? I say no. Why? Because of isolating it to one user account.
+const canGrantAndManageEndpointData = (permissions.a  == "grant") ? true : false;
+const canManageEndpointData = (permissions.a  == "mng") ? true : false;
+const mustFilterAccessByUID = (permissions.a == "uid") ? true : false;
+const mustFilterAccessByGID = (permissions.a  == "gid") ? true : false;
 
-// the question is: When are we acting as a user and when as an owner / admin?
 
 ```
 
 ### default roles
 - guest
-- root (system owner)
+- owner (system owner)
 - admin (tech support)
 - contributor (content creator)
 - reader (content reader but not creator)
@@ -103,7 +98,7 @@ Sets the permissions for a specific role and endpoint.
 
 - `role` (string): The role to set permissions for.
 - `endpoint` (string): The endpoint to set permissions for.
-- `permissions` (object): An object representing the permissions (c: create, r: read, u: update, d: delete, x: execute).
+- `permissions` (object): An object representing the permissions (c: create, r: read, u: update, d: delete, x: execute, a: accessSelector).
 
 #### `getGidOfRole(role)`
 
