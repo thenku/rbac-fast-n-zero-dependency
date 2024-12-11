@@ -10,6 +10,7 @@
 3. Optionally interpret the endpoint context if you have a multi-tenant system.
 4. Explicitly set (whitelist) permissions for each role per endpoint.
 5. Use your authorized user's groupId to query his/her permissions for the requested endpoint.
+6. If you want to use a DB for storing RBAC, then load your entries at app-initialization and update them at the same time as your DB updates.
 
 ### Installation
 
@@ -87,3 +88,27 @@ Sets the permissions for a specific role and endpoint.
 - `role` (string): The role to set permissions for.
 - `endpoint` (string): The endpoint to set permissions for.
 - `permissions` (object): An object representing the permissions (c: create, r: read, u: update, d: delete, x: execute).
+
+#### `getGidOfRole(role)`
+
+Gets the group ID (GID) of a specific role.
+
+- `role` (string): The role to get the GID for.
+
+#### `getRoleNameOfGid(gid)`
+
+Gets the role name associated with a specific group ID (GID).
+
+- `gid` (number): The GID to get the role name for.
+
+#### `removeRole(role)`
+
+Removes a role from the RBAC system.
+
+- `role` (string): The role to remove.
+
+#### `removeEndpoint(endpoint)`
+
+Removes an endpoint from the RBAC system.
+
+- `endpoint` (string): The endpoint to remove.

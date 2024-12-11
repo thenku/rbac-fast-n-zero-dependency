@@ -12,8 +12,8 @@ type iAccessRelationship = typeof accessRelationships[number];
 type iRoleRow = {id:string, gid:number};
 
 const defaultRoles: Record<string, iRoleRow> = {
-    guest: {id: "guest", gid:0},
-    owner: {id: "owner", gid:1},
+    guest: {id: "guest", gid:0}, //guest has uid 0 because 0 evaluates to false
+    owner: {id: "owner", gid:1}, //by default owner has all permissions
     admin: {id: "admin", gid:2}, //manages roles as tech support but isn't the responsible data controller and/or processor or company owner
     // system: {id: "system", gid:3}, //maybe relevant for tracking changes but every service can also have its own role
 
@@ -127,5 +127,5 @@ class RBACClass {
         return this.getPermission(roleName, endpoint);
     }
 }
-const RBAC = new RBACClass();
+const RBAC = new RBACClass(); //singleton
 export default RBAC;
