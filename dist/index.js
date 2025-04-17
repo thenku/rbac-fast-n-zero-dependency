@@ -1,7 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const storageContexts = ["root", "group", "user"]; //table storage locations: system, group or user.
-const accessSelectors = ["grant", "mng", "gid", "uid"]; //all may grant access to roles and access all user and group entries.
+//this is not the same as table-to-table relationships but they do force filters
+const accessSelectors = ["uid2id", "uid2uid", "gid2gid", "table", "hierarchy"]; //all may grant access to roles and access all user and group entries.
 const defaultRoles = {
     guest: { id: "guest", gid: 0 }, //guest has uid 0 and gid 0 because it evaluates to false
     owner: { id: "owner", gid: 1 }, //by default owner is the system owner having all permissions, gid:1 and uid:1
@@ -20,7 +21,7 @@ const defaultPermission = {
     u: 0,
     d: 0,
     x: 0,
-    a: "uid",
+    a: "uid2id",
 };
 class RBACClass {
     constructor() {
@@ -90,7 +91,7 @@ class RBACClass {
                 u: 1,
                 d: 1,
                 x: 1,
-                a: "grant",
+                a: "hierarchy",
             };
         }
         if (endPoint) {

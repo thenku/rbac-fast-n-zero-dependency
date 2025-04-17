@@ -1,6 +1,6 @@
 declare const storageContexts: readonly ["root", "group", "user"];
 type iStorageContext = typeof storageContexts[number];
-declare const accessSelectors: readonly ["grant", "mng", "gid", "uid"];
+declare const accessSelectors: readonly ["uid2id", "uid2uid", "gid2gid", "table", "hierarchy"];
 type iAccessSelector = typeof accessSelectors[number];
 type iPermission = {
     c: number;

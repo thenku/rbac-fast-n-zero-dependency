@@ -2,7 +2,8 @@
 const storageContexts = ["root", "group", "user"] as const; //table storage locations: system, group or user.
 type iStorageContext = typeof storageContexts[number];
 
-const accessSelectors = ["grant", "mng", "gid", "uid"] as const; //all may grant access to roles and access all user and group entries.
+//this is not the same as table-to-table relationships but they do force filters
+const accessSelectors = ["uid2id", "uid2uid", "gid2gid", "table", "hierarchy"] as const; //all may grant access to roles and access all user and group entries.
 type iAccessSelector = typeof accessSelectors[number];
 
 //permission type
@@ -39,7 +40,7 @@ const defaultPermission:iPermission = {
     u: 0,
     d: 0,
     x: 0,
-    a: "uid",
+    a: "uid2id",
 }
 
 class RBACClass {
@@ -114,7 +115,7 @@ class RBACClass {
                 u: 1,
                 d: 1,
                 x: 1,
-                a: "grant",
+                a: "hierarchy",
             } as iPermission;
         }
         if(endPoint){
