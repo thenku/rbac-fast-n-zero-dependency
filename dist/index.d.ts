@@ -8,7 +8,7 @@ type iPermission = {
     u: number;
     d: number;
     x: number;
-    a?: iAccessSelector;
+    a: iAccessSelector;
 };
 type iRoleName = string;
 declare class RBACClass {

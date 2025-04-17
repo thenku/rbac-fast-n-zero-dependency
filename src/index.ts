@@ -13,7 +13,7 @@ type iPermission = {
     u: number, //update
     d: number, //delete
     x: number, //execute
-    a?: iAccessSelector, //admin has access to all, gid to role and uid to user entries.
+    a: iAccessSelector, //admin has access to all, gid to role and uid to user entries.
 }
 
 type iRoleName = string;
